@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>動物森林：分數大冒險 (圖像化提示版)</title>
+<style>
+    body {
+        font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif;
+        background-color: #FFF0F5;
+        margin: 0;
+        padding: 20px;
+        height: 100vh;
+        box-sizing: border-box;
+    }
+    
+    /* --- 左右分欄主佈局 --- */
+    #main-layout {
+        display: flex;
+        width: 100%;
+        max-width: 1250px;
+        margin: 0 auto;
+        gap: 20px;
+        height: calc(100vh - 40px);
+    }
+    
+    /* --- 左手邊選單欄 --- */
+    #sidebar {
+        flex: 1;
+        min-width: 280px;
+        max-width: 350px;
+        background-color: #FFFFFF;
+        padding: 25px;
+        border-radius: 25px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+        border: 5px dashed #FFB6C1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    h1 { 
+        color: #FF69B4; 
+        font-size: 24px; 
+        margin-bottom: 5px;
+        text-align: center;
+    }
+    
+    .designer {
+        font-size: 14px;
+        color: #8B7355;
+        margin-bottom: 20px;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    .menu-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #5D4037;
+        margin: 15px 0 10px 0;
+        align-self: flex-start;
+    }
+    
+    .mode-btn {
+        width: 100%;
+        background-color: #FFFACD;
+        border: 2px solid #FFE4B5;
+        padding: 15px 10px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #5D4037;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .mode-btn:hover {
+        transform: scale(1.03);
+        background-color: #FFE4B5;
+    }
+    .mode-btn.active {
+        background-color: #FF69B4;
+        color: white;
+        border-color: #FF1493;
+        box-shadow: 0 4px 10px rgba(255, 105, 180, 0.4);
+    }
+    
+    /* --- 右手邊大畫面題目區 --- */
+    #game-content {
+        flex: 2;
+        background-color: #FFFFFF;
+        padding: 30px;
+        border-radius: 25px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+        border: 5px dashed #B6E3FF;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    
+    .status-bar {
+        display: flex;
+        justify-content: space-between;
+        font-size: 20px;
+        font-weight: bold;
+        background-color: #E8F5E9;
+        padding: 12px 25px;
+        border-radius: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .question {
+        font-size: 24px;
+        margin-bottom: 20px;
+        background-color: #E0FFFF;
+        padding: 25px;
+        border-radius: 15px;
+        line-height: 1.8;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    /* --- 直式與帶分數置中對齊樣式 --- */
+    .fraction-container {
+        display: inline-flex;
+        align-items: center;
+        vertical-align: middle;
+        margin: 0 8px;
+        font-weight: bold;
+    }
+    .whole-num {
+        font-size: 1.5em;
+        margin-right: 5px;
+        color: #D2691E; 
+    }
+    .frac {
+        display: inline-flex;
+        flex-direction: column;
+        vertical-align: middle;
+        align-items: center;
+    }
+    .num {
+        border-bottom: 3px solid #5D4037;
+        padding: 0 5px;
+        min-width: 22px;
+        text-align: center;
+    }
+    .den {
+        padding: 2px 5px 0 5px;
+        min-width: 22px;
+        text-align: center;
+    }
+    /* ------------------------ */
+    
+    .options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        flex-grow: 1;
+    }
+    button.option-btn {
+        background-color: #FFDAB9;
+        border: none;
+        padding: 15px;
+        font-size: 24px;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: transform 0.2s, background-color 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100px;
+    }
+    button.option-btn:hover {
+        background-color: #FFA07A;
+        transform: scale(1.03);
+    }
+    
+    /* 提示與回饋區 */
+    #feedback {
+        font-size: 18px;
+        font-weight: bold;
+        margin: 15px 0;
+        min-height: 60px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    
+    .hint-box {
+        background-color: #FFF0F5;
+        border-left: 5px solid #FF69B4;
+        padding: 12px 18px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        color: #C71585;
+        font-size: 16px;
+        text-align: left;
+        width: 92%;
+        line-height: 1.6;
+    }
+    
+    #next-btn, #restart-btn {
+        background-color: #98FB98;
+        border: none;
+        padding: 12px 35px;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 12px;
+        cursor: pointer;
+        align-self: center;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    #next-btn:hover, #restart-btn:hover { background-color: #3CB371; color: white; }
+    
+    .welcome-msg {
+        font-size: 24px;
+        text-align: center;
+        margin: auto;
+        color: #8B4513;
+        line-height: 2;
+    }
+</style>
+</head>
+<body>
+
+<div id="main-layout">
+    <div id="sidebar">
+        <h1>🐻 動物森林<br>分數大冒險 🦊</h1>
+        <div class="designer">設計者：筲箕灣官立小學陳茗茵主任</div>
+        
+        <div class="menu-title">🌟 請選擇挑戰主題：</div>
+        <button class="mode-btn" id="btn-expand" onclick="changeMode('expand')">✨ 擴分遊戲</button>
+        <button class="mode-btn" id="btn-simplify" onclick="changeMode('simplify')">💎 約分遊戲</button>
+        <button class="mode-btn" id="btn-convert" onclick="changeMode('convert')">🔄 帶分數/假分數互化</button>
+    </div>
+    
+    <div id="game-content">
+        <div id="welcome-area" class="welcome-msg">
+            🦁 歡迎來到分數大冒險！<br>
+            請在<b>左手邊</b>選擇一個你想學習的題目類型開始吧！
+        </div>
+        
+        <div id="play-area" style="display: none; height: 100%; flex-direction: column;">
+            <div class="status-bar">
+                <span id="q-counter">題數: 1 / 5</span>
+                <span id="score-display">⭐ 分數: 0</span>
+            </div>
+            
+            <div class="question" id="question-text"></div>
+            <div class="options" id="options-container"></div>
+            <div id="feedback"></div>
+            <button id="next-btn" onclick="nextQuestion()">下一題 🐾</button>
+        </div>
+
+        <div id="result-area" style="display:none; margin: auto;">
+            <h2>🎉 本輪挑戰結束！ 🎉</h2>
+            <p style="font-size: 28px;">你的總得分是：<span id="final-score" style="color: #FF69B4; font-weight: bold;"></span> 分</p>
+            <p id="final-message" style="font-size: 22px; margin-bottom: 30px;"></p>
+            <button id="restart-btn" style="display:inline-block;" onclick="restartCurrentMode()">再玩一次 🔄</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentQuestion = 0;
+    let score = 0;
+    let correctAnswerStr = "";
+    let currentGameMode = ""; 
+    let currentHint = ""; 
+    const maxQuestions = 5;
+
+    const baseFractions = [
+        {n: 1, d: 2}, {n: 1, d: 3}, {n: 2, d: 3}, {n: 1, d: 4}, 
+        {n: 3, d: 4}, {n: 1, d: 5}, {n: 2, d: 5}, {n: 3, d: 5},
+        {n: 1, d: 10}, {n: 3, d: 10}, {n: 7, d: 10}, {n: 1, d: 8}, {n: 5, d: 8}
+    ];
+
+    function formatFraction(w, n, d) {
+        let fracHtml = `<div class="frac"><span class="num">${n}</span><span class="den">${d}</span></div>`;
+        if (w > 0) {
+            return `<div class="fraction-container"><span class="whole-num">${w}</span>${fracHtml}</div>`;
+        }
+        return `<div class="fraction-container">${fracHtml}</div>`;
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // 切換功能
+    function changeMode(mode) {
+        currentGameMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        if(mode === 'expand') document.getElementById('btn-expand').classList.add('active');
+        if(mode === 'simplify') document.getElementById('btn-simplify').classList.add('active');
+        if(mode === 'convert') document.getElementById('btn-convert').classList.add('active');
+        
+        document.getElementById('welcome-area').style.display = "none";
+        document.getElementById('play-area').style.display = "flex";
+        document.getElementById('result-area').style.display = "none";
+        
+        initGameSession();
+    }
+
+    function initGameSession() {
+        currentQuestion = 1;
+        score = 0;
+        document.getElementById('score-display').innerHTML = `⭐ 分數: 0`;
+        document.getElementById('q-counter').innerHTML = `題數: 1 / 5`;
+        generateQuestion();
+    }
+
+    function restartCurrentMode() {
+        document.getElementById('play-area').style.display = "flex";
+        document.getElementById('result-area').style.display = "none";
+        initGameSession();
+    }
+
+    function generateQuestion() {
+        let questionHtml = "";
+        let options = []; 
+
+        if (currentGameMode === 'simplify') {
+            let base = baseFractions[getRandomInt(0, baseFractions.length - 1)];
+            let multiplier = getRandomInt(2, Math.floor(100 / base.d));
+            let expandedNum = base.n * multiplier;
+            let expandedDen = base.d * multiplier;
+
+            questionHtml = `請將 ${formatFraction(0, expandedNum, expandedDen)} 約簡為最簡分數：`;
+            correctAnswerStr = `0_${base.n}/${base.d}`;
+            options.push({w: 0, n: base.n, d: base.d, str: correctAnswerStr});
+            
+            currentHint = `💡 <b>思維提示：</b>約分時，要找出分子 ${expandedNum} 和分母 ${expandedDen} 的公因數。試試看將它們同時除以 <b>${multiplier}</b> 吧！`;
+
+            while(options.length < 4) {
+                let wb = baseFractions[getRandomInt(0, baseFractions.length - 1)];
+                let s = `0_${wb.n}/${wb.d}`;
+                if(!options.some(o => o.str === s)) options.push({w: 0, n: wb.n, d: wb.d, str: s});
+            }
+        } 
+        else if (currentGameMode === 'expand') {
+            let base = baseFractions[getRandomInt(0, baseFractions.length - 1)];
+            let multiplier = getRandomInt(2, Math.floor(100 / base.d));
+            let expandedNum = base.n * multiplier;
+            let expandedDen = base.d * multiplier;
+
+            questionHtml = `以下哪個是 ${formatFraction(0, base.n, base.d)} 的等值分數（擴分）？`;
+            correctAnswerStr = `0_${expandedNum}/${expandedDen}`;
+            options.push({w: 0, n: expandedNum, d: expandedDen, str: correctAnswerStr});
+            
+            currentHint = `💡 <b>思維提示：</b>擴分時，分子和分母必須<b>同時乘以相同的數</b>。快看看哪一個選項把分子和分母同時放大了 <b>${multiplier}</b> 倍？`;
+
+            while(options.length < 4) {
+                let wm = getRandomInt(2, Math.floor(100 / base.d));
+                let wn = base.n * wm + (Math.random() > 0.5 ? 1 : -1); 
+                if(wn < 1) wn = base.n * wm + 2;
+                let s = `0_${wn}/${base.d * wm}`;
+                if(!options.some(o => o.str === s) && s !== correctAnswerStr) {
+                    options.push({w: 0, n: wn, d: base.d * wm, str: s});
+                }
+            }
+        }
+        else if (currentGameMode === 'convert') {
+            let isImproperToMixed = Math.random() > 0.5;
+            let d = getRandomInt(2, 10);
+            let w = getRandomInt(1, 5);
+            let n = getRandomInt(1, d - 1);
+            let improperN = w * d + n;
+
+            if (isImproperToMixed) {
+                // 【題型：假分數化為帶分數】
+                questionHtml = `請將假分數 ${formatFraction(0, improperN, d)} 化為帶分數：`;
+                correctAnswerStr = `${w}_${n}/${d}`;
+                options.push({w: w, n: n, d: d, str: correctAnswerStr});
+
+                // 嵌入新版優化提示
+                currentHint = `💡 <b>思維提示：</b>留意分母 <b>${d}</b>，它告訴你多少件可還原一整份。看看現在分子顯示有 <b>${improperN}</b> 件？按分母的數字，每 <b>${d}</b> 件可還原一整份？用包含除法計算，以分母的數字 <b>${d}</b> 包成一份，可包得多少個整份？還餘多少件？`;
+
+                while(options.length < 4) {
+                    let wrongW = w + getRandomInt(-1, 2);
+                    if (wrongW < 1) wrongW = 1;
+                    let wrongN = n + getRandomInt(-2, 2);
+                    if (wrongN < 1 || wrongN >= d) wrongN = getRandomInt(1, d - 1);
+                    
+                    let wrongStr = `${wrongW}_${wrongN}/${d}`;
+                    if(!options.some(o => o.str === wrongStr) && wrongStr !== correctAnswerStr) {
+                        options.push({w: wrongW, n: wrongN, d: d, str: wrongStr});
+                    }
+                }
+            } else {
+                // 【題型：帶分數化為假分數】
+                questionHtml = `請將帶分數 ${formatFraction(w, n, d)} 化為假分數：`;
+                correctAnswerStr = `0_${improperN}/${d}`;
+                options.push({w: 0, n: improperN, d: d, str: correctAnswerStr});
+
+                // 嵌入新版優化提示
+                currentHint = `💡 <b>思維提示：</b>留意分母 <b>${d}</b>，它告訴你一整份平分為多少件。看看現在有 <b>${w}</b> 個整份，按分母均分後會得出多少件？再加上分子原有 <b>${n}</b> 的數量，假分數應是多少？`;
+
+                while(options.length < 4) {
+                    let wrongN = improperN + getRandomInt(-3, 4);
+                    if (wrongN <= d) wrongN = d + 2;
+                    let wrongStr = `0_${wrongN}/${d}`;
+                    if(!options.some(o => o.str === wrongStr) && wrongStr !== correctAnswerStr) {
+                        options.push({w: 0, n: wrongN, d: d, str: wrongStr});
+                    }
+                }
+            }
+        }
+
+        options.sort(() => Math.random() - 0.5);
+
+        document.getElementById('question-text').innerHTML = questionHtml;
+        let optionsHtml = "";
+        options.forEach(opt => {
+            optionsHtml += `<button class="option-btn" onclick="checkAnswer('${opt.str}')">${formatFraction(opt.w, opt.n, opt.d)}</button>`;
+        });
+        document.getElementById('options-container').innerHTML = optionsHtml;
+        document.getElementById('feedback').innerHTML = "";
+        document.getElementById('next-btn').style.display = "none";
+    }
+
+    function checkAnswer(selectedStr) {
+        let buttons = document.querySelectorAll('.option-btn');
+        buttons.forEach(btn => btn.disabled = true);
+
+        let feedbackDiv = document.getElementById('feedback');
+        if (selectedStr === correctAnswerStr) {
+            score += 20;
+            document.getElementById('score-display').innerHTML = `⭐ 分數: ${score}`;
+            feedbackDiv.innerHTML = "<span style='color: #3CB371; font-size: 22px;'>✅ 太棒了！答對啦！</span>";
+        } else {
+            let parts = correctAnswerStr.split('_');
+            let w = parseInt(parts[0]);
+            let fracParts = parts[1].split('/');
+            let n = parseInt(fracParts[0]);
+            let d = parseInt(fracParts[1]);
+            
+            feedbackDiv.innerHTML = `
+                <div class="hint-box">${currentHint}</div>
+                <div style="color: #FF4500;"><span style="color:#5D4037;">再接再厲！正確答案是：</span>${formatFraction(w, n, d)}</div>
+            `;
+        }
+        document.getElementById('next-btn').style.display = "inline-block";
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        if (currentQuestion <= maxQuestions) {
+            document.getElementById('q-counter').innerHTML = `題數: ${currentQuestion} / ${maxQuestions}`;
+            generateQuestion();
+        } else {
+            endGame();
+        }
+    }
+
+    function endGame() {
+        document.getElementById('play-area').style.display = "none";
+        document.getElementById('result-area').style.display = "block";
+        document.getElementById('final-score').innerText = score;
+        
+        let msg = "";
+        if (score === 100) msg = "🌟 滿分！你是無敵的分數大師！";
+        else if (score >= 60) msg = "👍 很棒喔！觀念很清楚！";
+        else msg = "🐾 沒關係，看著提示多練習幾次，你一定會進步的！";
+        document.getElementById('final-message').innerText = msg;
+    }
+</script>
+
+</body>
+</html>
